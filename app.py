@@ -2,7 +2,7 @@ from flask import Flask, jsonify, render_template
 import psycopg2
 import json
 
-# Configurar Flask para usar la carpeta 'plantillas' hola jeje
+# Configurar Flask para usar la carpeta 'plantillas' soy un nuevo comentario
 app = Flask(__name__, template_folder='plantillas')
 
 def get_db_connection():
