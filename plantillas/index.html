@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mapa de Incidentes</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map { height: 600px; width: 100%; }
+  </style>
+</head>
+<body>
+  <h3>Mapa de Incidentes, Zonas Seguras y Zonas Peligrosas</h3>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // Crear mapa y centrarlo en L
+    var map = L.map('map').setView([-12.0600, -77.0300], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+    }).addTo(map);
+
+    // Crear un grupo de capas para calcular los límites
+    var layerGroup = L.featureGroup();
+
+    // Cargar incidentes
+    fetch('http://localhost:5000/incidentes', { method: 'GET' })
+      .then(response => {
+        console.log('Respuesta de /incidentes:', response);
+        if (!response.ok) {
+          throw new Error('No se pudo conectar al servidor (incidentes). Estado: ' + response.status);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Datos de incidentes:', data);
+        if (data.features && data.features.length > 0) {
+          var incidentLayer = L.geoJSON(data, {
+            onEachFeature: function (feature, layer) {
+              var popupText = "<b>Tipo:</b> " + feature.properties.tipo +
+                              "<br><b>Descripción:</b> " + feature.properties.descripcion +
+                              "<br><b>Advertencia:</b> Aquí es un lugar peligroso";
+              layer.bindPopup(popupText);
+            }
+          }).addTo(map);
+          layerGroup.addLayer(incidentLayer);
+        } else {
+          alert('No se encontraron incidentes en la base de datos.');
+        }
+      })
+      .catch(error => {
+        console.error('Error al cargar los incidentes:', error);
+        alert('No se pudo conectar con la base de datos para cargar los incidentes. Por favor, revisa el servidor o la conexión.');
+      });
+
+    // Cargar zonas de seguridad (verdes)
+    fetch('http://localhost:5000/zonas_seguridad', { method: 'GET' })
+      .then(response => {
+        console.log('Respuesta de /zonas_seguridad:', response);
+        if (!response.ok) {
+          throw new Error('No se pudo conectar al servidor (zonas de seguridad). Estado: ' + response.status);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Datos de zonas_seguridad:', data);
+        if (data.features && data.features.length > 0) {
+          var zonasLayer = L.geoJSON(data, {
+            style: function () {
+              return {
+                color: "#00FF00", // Verde para zonas seguras
+                weight: 2,
+                opacity: 0.8,
+                fillOpacity: 0.3
+              };
+            },
+            onEachFeature: function (feature, layer) {
+              var popupText = "<b>Nombre:</b> " + feature.properties.nombre +
+                              "<br><b>Descripción:</b> " + feature.properties.descripcion +
+                              "<br><b>Estatus:</b> Zona segura";
+              layer.bindPopup(popupText);
+            }
+          }).addTo(map);
+          layerGroup.addLayer(zonasLayer);
+        } else {
+          alert('No se encontraron zonas de seguridad en la base de datos.');
+        }
+      })
+      .catch(error => {
+        console.error('Error al cargar las zonas de seguridad:', error);
+        alert('No se pudo conectar con la base de datos para cargar las zonas de seguridad. Por favor, revisa el servidor o la conexión.');
+      });
+
+    // Cargar zonas peligrosas (rojas)
+    fetch('http://localhost:5000/zonas_peligrosas', { method: 'GET' })
+      .then(response => {
+        console.log('Respuesta de /zonas_peligrosas:', response);
+        if (!response.ok) {
+          throw new Error('No se pudo conectar al servidor (zonas peligrosas). Estado: ' + response.status);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Datos de zonas_peligrosas:', data);
+        if (data.features && data.features.length > 0) {
+          var zonasPeligrosasLayer = L.geoJSON(data, {
+            style: function () {
+              return {
+                color: "#FF0000", // Rojo para zonas peligrosas
+                weight: 2,
+                opacity: 0.8,
+                fillOpacity: 0.3
+              };
+            },
+            onEachFeature: function (feature, layer) {
+              var popupText = "<b>Nombre:</b> " + feature.properties.nombre +
+                              "<br><b>Descripción:</b> " + feature.properties.descripcion +
+                              "<br><b>Advertencia:</b> Zona muy peligrosa";
+              layer.bindPopup(popupText);
+            }
+          }).addTo(map);
+          layerGroup.addLayer(zonasPeligrosasLayer);
+        } else {
+          alert('No se encontraron zonas peligrosas en la base de datos.');
+        }
+
+        // Ajustar el mapa para que muestre todas las capas
+        if (layerGroup.getLayers().length > 0) {
+          map.fitBounds(layerGroup.getBounds(), { padding: [20, 20] });
+        }
+      })
+      .catch(error => {
+        console.error('Error al cargar las zonas peligrosas:', error);
+        alert('No se pudo conectar con la base de datos para cargar las zonas peligrosas. Por favor, revisa el servidor o la conexión.');
+      });
+  </script>
+</body>
+</html>
