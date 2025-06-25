@@ -2,8 +2,11 @@ from flask import Flask, jsonify, render_template
 import psycopg2
 import json
 
+from flask_cors import CORS
+
 # Configurar Flask para usar la carpeta 'plantillas' soy un nuevo comentario
-app = Flask(__name__, template_folder='plantillas')
+app = Flask(__name__, static_folder='static', template_folder='plantillas')
+CORS(app)
 
 def get_db_connection():
     try:
@@ -22,6 +25,44 @@ def get_db_connection():
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/segura')
+def buscarSegura():
+    return render_template('ruta_segura.html')
+
+@app.route('/segura2')
+def buscarSegura2():
+    return render_template('ruta_segura2.html')
+
+@app.route('/login')
+def buscarLogin():
+    return render_template('login.html')
+
+@app.route('/register')
+def registrar():
+    return render_template('register.html')
+
+#vamos crear un ruta para guardar un usuario
+@app.route('/registrarUsuario', methods=['POST'])
+def guardar_usuario():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        # Aquí deberías obtener los datos del usuario desde el request
+        # Por ejemplo, usando request.form['username'] para obtener el nombre de usuario
+        username = request.form['username']
+        password = request.form['password']
+
+        cur.execute("INSERT INTO usuarios (username, password) VALUES (%s, %s)", (username, password))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"message": "Usuario guardado exitosamente"}), 201
+    except Exception as e:
+        return jsonify({"error": f"Error al guardar el usuario: {str(e)}"}), 500
+
+
+
 
 @app.route('/incidentes')
 def get_incidentes():
