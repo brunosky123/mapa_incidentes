@@ -43,7 +43,6 @@ function loadAllData() {
         .catch(error => {
             console.error('Error al cargar datos:', error);
             document.getElementById('loading-message').style.display = 'none';
-            alert('Error al cargar algunos datos. Por favor revise la consola para más detalles.');
         });
 }
 
